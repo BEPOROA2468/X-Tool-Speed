@@ -175,6 +175,26 @@ export default { async fetch(request) { if (request.method === 'OPTIONS') { retu
     setNum(els.totalSpeed, total.toFixed(1), 'Mbps');
     els.status.textContent = 'Done';
     els.overallProg.value = 100;
+
+// === Send Result to Cloudflare Worker ===
+const result = {
+  totalSpeed: total.toFixed(1),
+  downMbps: down.toFixed(1),
+  upMbps: upMbps.toFixed(1),
+  pingMs: parseFloat(els.pingMs.textContent)
+};
+
+try {
+  await fetch("https://x-tool-api.yourname.workers.dev", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(result)
+  });
+  console.log("Result sent:", result);
+} catch (e) {
+  console.error("Failed to send result:", e);
+}
+
   });
 
   els.btnStop.addEventListener('click', () => { stopFlag = true; els.status.textContent = 'Stopped'; });

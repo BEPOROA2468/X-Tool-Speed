@@ -233,7 +233,12 @@ export default { async fetch(request) { if (request.method === 'OPTIONS') { retu
 
   async function uploadTest(endpoint, sizeBytes, repeat){
     const data = new Uint8Array(sizeBytes);
-    crypto.getRandomValues(data);
+    
+    for (let i = 0; i < sizeBytes; i += 65536) {
+    let chunk = data.subarray(i, i + 65536);
+    crypto.getRandomValues(chunk);
+  }
+    
     let sent = 0;
     const t0 = performance.now();
     for(let i=0;i<repeat;i++){

@@ -1,0 +1,255 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>X Tool – Internet Speed</title>
+  <style>
+    :root { --bg:#0f172a; --card:#1e293b; --soft:#334155; --text:#e2e8f0; --muted:#94a3b8; }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto; background:var(--bg); color:var(--text)}
+    .wrap{max-width:900px;margin:32px auto;padding:16px}
+    .brand{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+    .brand h1{margin:0;font-weight:800;letter-spacing:.3px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+    .card{background:var(--card);border-radius:18px;box-shadow:0 12px 24px rgba(0,0,0,.18);padding:18px}
+    .center{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+    .big{font-size:64px;font-weight:900;line-height:1;margin:8px 0}
+    .label{font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    button{cursor:pointer;border:0;border-radius:14px;padding:12px 16px;background:#22c55e;color:#072; font-weight:700}
+    button.secondary{background:var(--soft);color:var(--text)}
+    .muted{color:var(--muted)}
+    progress{width:100%;height:10px;border-radius:12px;overflow:hidden}
+    progress::-webkit-progress-bar{background:#0b1220}
+    progress::-webkit-progress-value{background:#22c55e}
+    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+    .foot{margin-top:18px;font-size:12px;color:var(--muted)}
+    .pill{background:#0b1220;padding:4px 10px;border-radius:999px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      <h1>X Tool</h1>
+      <div class="pill mono" id="serverHint">origin: <span id="origin"></span></div>
+    </div><div class="card center" style="padding:28px 18px">
+  <div class="label">Internet Speed</div>
+  <div class="big" id="totalSpeed">0.0 <span class="muted" style="font-size:28px;font-weight:700">Mbps</span></div>
+  <div class="muted" id="status">Tap Start to run tests</div>
+  <div class="row" style="margin-top:16px">
+    <button id="btnStart">▶ Start</button>
+    <button id="btnStop" class="secondary">■ Stop</button>
+    <button id="btnCopy" class="secondary">Copy</button>
+  </div>
+  <progress id="overallProg" value="0" max="100" style="margin-top:14px"></progress>
+</div>
+
+<div class="grid" style="margin-top:16px">
+  <div class="card center">
+    <div class="label">Download</div>
+    <div class="big" id="downMbps">0.0 <span class="muted" style="font-size:28px;font-weight:700">Mbps</span></div>
+    <div class="muted" id="downInfo">waiting…</div>
+    <progress id="downProg" value="0" max="100" style="margin-top:10px"></progress>
+  </div>
+  <div class="card center">
+    <div class="label">Upload</div>
+    <div class="big" id="upMbps">0.0 <span class="muted" style="font-size:28px;font-weight:700">Mbps</span></div>
+    <div class="muted" id="upInfo">(optional API required)</div>
+    <progress id="upProg" value="0" max="100" style="margin-top:10px"></progress>
+  </div>
+  <div class="card center">
+    <div class="label">Latency (Ping)</div>
+    <div class="big" id="pingMs">0 <span class="muted" style="font-size:28px;font-weight:700">ms</span></div>
+    <div class="muted" id="pingInfo">waiting…</div>
+    <progress id="pingProg" value="0" max="100" style="margin-top:10px"></progress>
+  </div>
+</div>
+
+<div class="card foot">
+  <b>How to use (GitHub Pages)</b>
+  <ol>
+    <li>Add a large file in your repo root named <span class="mono">test.bin</span> (10–50&nbsp;MB). This is used for the download test.</li>
+    <li>(Optional) Add a small file named <span class="mono">ping.txt</span> (just a few bytes). Used for latency.</li>
+    <li>(Optional for Upload) Deploy the tiny Cloudflare Worker shown below, then set <span class="mono">UPLOAD_ENDPOINT</span> to your Worker URL.</li>
+  </ol>
+  <details>
+    <summary>Cloudflare Worker for Upload (paste into Cloudflare → Workers)</summary>
+    <pre class="mono" style="white-space:pre-wrap">
+
+export default { async fetch(request) { if (request.method === 'OPTIONS') { return new Response(null, { headers: cors() }); } if (request.method === 'POST') { // Read the body (consumes upload) and discard await request.arrayBuffer(); return new Response(JSON.stringify({ ok: true }), { headers: { ...cors(), 'content-type': 'application/json' }, status: 200, }); } return new Response('OK', { headers: cors() }); } } function cors(){ return { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'POST, OPTIONS', 'access-control-allow-headers': 'content-type' }; } </pre> </details> </div>
+
+  </div><script>
+(() => {
+  const els = {
+    origin: document.getElementById('origin'),
+    status: document.getElementById('status'),
+    totalSpeed: document.getElementById('totalSpeed'),
+    downMbps: document.getElementById('downMbps'),
+    upMbps: document.getElementById('upMbps'),
+    pingMs: document.getElementById('pingMs'),
+    downInfo: document.getElementById('downInfo'),
+    upInfo: document.getElementById('upInfo'),
+    pingInfo: document.getElementById('pingInfo'),
+    downProg: document.getElementById('downProg'),
+    upProg: document.getElementById('upProg'),
+    pingProg: document.getElementById('pingProg'),
+    overallProg: document.getElementById('overallProg'),
+    btnStart: document.getElementById('btnStart'),
+    btnStop: document.getElementById('btnStop'),
+    btnCopy: document.getElementById('btnCopy'),
+  };
+
+  // ====== CONFIG ======
+  // If you deploy the Worker, put its URL here. Example: 'https://your-worker.workers.dev/upload'
+  const UPLOAD_ENDPOINT = '';
+
+  // GitHub Pages files (in your repo root)
+  const DOWNLOAD_FILE = 'test.bin'; // Add a 10–50 MB binary file to your repo
+  const PING_FILE = 'ping.txt';      // Add a tiny file (or keep default; we'll fallback)
+
+  els.origin.textContent = location.origin.replace('https://','');
+
+  let stopFlag = false;
+  function reset() {
+    stopFlag = false;
+    els.overallProg.value = 0;
+    setNum(els.totalSpeed, 0, 'Mbps');
+    setNum(els.downMbps, 0, 'Mbps');
+    setNum(els.upMbps, 0, 'Mbps');
+    setNum(els.pingMs, 0, 'ms');
+    els.downInfo.textContent = 'waiting…';
+    els.upInfo.textContent = UPLOAD_ENDPOINT ? 'waiting…' : 'upload API not set';
+    els.pingInfo.textContent = 'waiting…';
+    els.downProg.value = 0; els.upProg.value = 0; els.pingProg.value = 0;
+  }
+  reset();
+
+  els.btnStart.addEventListener('click', async () => {
+    reset();
+    stopFlag = false;
+    els.status.textContent = 'Running…';
+
+    // 1) Ping
+    try {
+      els.pingInfo.textContent = 'measuring…';
+      const p = await measurePing(5);
+      setNum(els.pingMs, p.toFixed(0), 'ms');
+      els.pingInfo.textContent = 'avg of 5 pings';
+      els.pingProg.value = 100;
+    } catch(e){
+      els.pingInfo.textContent = 'ping failed';
+    }
+    els.overallProg.value = 25;
+    if(stopFlag) return;
+
+    // 2) Download
+    try {
+      els.downInfo.textContent = 'downloading blocks…';
+      const mbps = await downloadTest(DOWNLOAD_FILE, 8, 4); // 8MB blocks × 4 parallel
+      setNum(els.downMbps, mbps.toFixed(1), 'Mbps');
+      els.downInfo.textContent = 'parallel blocks finished';
+      els.downProg.value = 100;
+    } catch(e){
+      els.downInfo.textContent = 'download failed ('+e+'). Ensure test.bin exists.';
+    }
+    els.overallProg.value = 65;
+    if(stopFlag) return;
+
+    // 3) Upload (optional)
+    let upMbps = 0;
+    if (UPLOAD_ENDPOINT) {
+      try {
+        els.upInfo.textContent = 'uploading…';
+        upMbps = await uploadTest(UPLOAD_ENDPOINT, 4 * 1024 * 1024, 4); // 4MB × 4 times
+        setNum(els.upMbps, upMbps.toFixed(1), 'Mbps');
+        els.upInfo.textContent = 'finished';
+        els.upProg.value = 100;
+      } catch(e){
+        els.upInfo.textContent = 'upload failed ('+e+')';
+      }
+    }
+
+    // 4) Total
+    const down = parseFloat(els.downMbps.textContent) || 0;
+    const total = upMbps ? (down + upMbps) / 2 : down; // fast.com style emphasizes download
+    setNum(els.totalSpeed, total.toFixed(1), 'Mbps');
+    els.status.textContent = 'Done';
+    els.overallProg.value = 100;
+  });
+
+  els.btnStop.addEventListener('click', () => { stopFlag = true; els.status.textContent = 'Stopped'; });
+  els.btnCopy.addEventListener('click', async () => {
+    const text = `Download: ${els.downMbps.textContent}\nUpload: ${els.upMbps.textContent}\nPing: ${els.pingMs.textContent}\nTotal: ${els.totalSpeed.textContent}`;
+    try { await navigator.clipboard.writeText(text); els.status.textContent = 'Copied!'; } catch(e){ els.status.textContent = 'Copy failed'; }
+  });
+
+  // ---- helpers ----
+  function setNum(el, num, unit){ el.innerHTML = `${num} <span class="muted" style="font-size:28px;font-weight:700">${unit}</span>`; }
+
+  async function measurePing(times=5){
+    const url = `${PING_FILE}?t=${Date.now()}&r=`; // disable cache
+    const arr = [];
+    for(let i=0;i<times;i++){
+      const t0 = performance.now();
+      try {
+        await fetch(url+i, { cache: 'no-store' });
+      } catch {
+        // fallback: request root
+        await fetch(`./?t=${Date.now()}`,{cache:'no-store'});
+      }
+      const t1 = performance.now();
+      if(stopFlag) throw 'stopped';
+      arr.push(t1 - t0);
+      els.pingProg.value = (i+1)/times*100;
+    }
+    return arr.reduce((a,b)=>a+b,0)/arr.length;
+  }
+
+  async function downloadTest(file, blockMB=8, parallel=4){
+    // We stream slices of your big file with HTTP Range requests
+    const controller = new AbortController();
+    const sizeBytes = blockMB * 1024 * 1024;
+    let loadedBytes = 0;
+
+    const tasks = Array.from({length: parallel}, (_,i)=> (async () => {
+      const startTime = performance.now();
+      const res = await fetch(file, { headers: { 'Range': `bytes=${i*sizeBytes}-${(i+1)*sizeBytes-1}` }, cache:'no-store', signal: controller.signal });
+      const reader = res.body.getReader();
+      while(true){
+        const {done, value} = await reader.read();
+        if(done) break;
+        loadedBytes += value.byteLength;
+        els.downProg.value = Math.min(99, (loadedBytes / (sizeBytes*parallel)) * 100);
+        if(stopFlag){ controller.abort(); throw 'stopped'; }
+      }
+      const dt = (performance.now()-startTime)/1000; // seconds
+      return (loadedBytes*8/1e6) / dt; // Mbps
+    })());
+
+    const speeds = await Promise.all(tasks);
+    const avg = speeds.reduce((a,b)=>a+b,0)/speeds.length;
+    return avg;
+  }
+
+  async function uploadTest(endpoint, sizeBytes, repeat){
+    const data = new Uint8Array(sizeBytes);
+    crypto.getRandomValues(data);
+    let sent = 0;
+    const t0 = performance.now();
+    for(let i=0;i<repeat;i++){
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'content-type': 'application/octet-stream' },
+        body: data,
+      });
+      await res.arrayBuffer(); // ensure completion
+      sent += sizeBytes;
+      els.upProg.value = ((i+1)/repeat)*100;
+      if(stopFlag) throw 'stopped';
+    }
+    const dt = (performance.now()-t0)/1000;
+    return (sent*8/1e6)/dt; // Mbps
+  }
+})();
+</script></body>
+</html>

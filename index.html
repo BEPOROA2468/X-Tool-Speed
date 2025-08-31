@@ -100,7 +100,6 @@ export default { async fetch(request) { if (request.method === 'OPTIONS') { retu
   };
 
   // ====== CONFIG ======
-  // If you deploy the Worker, put its URL here. Example: 'https://your-worker.workers.dev/upload'
   const UPLOAD_ENDPOINT = 'https://x-tool-speed.ariyanislamariya420.workers.dev/';
 
   // GitHub Pages files (in your repo root)
@@ -185,7 +184,7 @@ const result = {
 };
 
 try {
-  await fetch("https://x-tool-api.yourname.workers.dev", {
+  await fetch("https://x-tool-speed.ariyanislamariya420.workers.dev/", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(result)

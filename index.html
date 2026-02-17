@@ -65,17 +65,6 @@
   </div>
 </div>
 
-<div class="card foot">
-  <b>How to use (GitHub Pages)</b>
-  <ol>
-    <li>Add a large file in your repo root named <span class="mono">test.bin</span> (10–50&nbsp;MB). This is used for the download test.</li>
-    <li>(Optional) Add a small file named <span class="mono">ping.txt</span> (just a few bytes). Used for latency.</li>
-    <li>(Optional for Upload) Deploy the tiny Cloudflare Worker shown below, then set <span class="mono">UPLOAD_ENDPOINT</span> to your Worker URL.</li>
-  </ol>
-  <details>
-    <summary>Cloudflare Worker for Upload (paste into Cloudflare → Workers)</summary>
-    <pre class="mono" style="white-space:pre-wrap">
-
 export default { async fetch(request) { if (request.method === 'OPTIONS') { return new Response(null, { headers: cors() }); } if (request.method === 'POST') { // Read the body (consumes upload) and discard await request.arrayBuffer(); return new Response(JSON.stringify({ ok: true }), { headers: { ...cors(), 'content-type': 'application/json' }, status: 200, }); } return new Response('OK', { headers: cors() }); } } function cors(){ return { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'POST, OPTIONS', 'access-control-allow-headers': 'content-type' }; } </pre> </details> </div>
 
   </div><script>
